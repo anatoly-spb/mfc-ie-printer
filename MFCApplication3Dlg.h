@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "afxwin.h"
 
 
 // CMFCApplication3Dlg dialog
@@ -33,4 +34,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
   afx_msg void OnBnClickedButton1();
+  CEdit m_name;
 };

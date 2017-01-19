@@ -64,7 +64,8 @@ CMFCApplication3Dlg::CMFCApplication3Dlg(CWnd* pParent /*=NULL*/)
 
 void CMFCApplication3Dlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+  CDialogEx::DoDataExchange(pDX);
+  DDX_Control(pDX, IDC_EDIT1, m_name);
 }
 
 BEGIN_MESSAGE_MAP(CMFCApplication3Dlg, CDialogEx)
@@ -164,23 +165,29 @@ HCURSOR CMFCApplication3Dlg::OnQueryDragIcon()
 
 void CMFCApplication3Dlg::OnBnClickedButton1()
 {
-  std::future<int> f = std::async(std::launch::async, []() { 
-    auto hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    CWebBrowser2 app;
-    if (!app.CreateDispatch(_T("InternetExplorer.Application")))
-    {
-      CString error;
-      error.Format(_T("%s"), _T("Cannot start Word and get Application object"));
+  CString name;
+  m_name.GetWindowText(name);
+  if (!name.IsEmpty()) {
+    std::future<bool> f = std::async(std::launch::async, [name]() {
+      auto hr = ::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+      CWebBrowser2 app;
+      if (!app.CreateDispatch(_T("InternetExplorer.Application")))
+      {
+        CString error;
+        error.Format(_T("%s"), _T("Cannot start Word and get Application object"));
+        ::CoUninitialize();
+        return false;
+      }
+      COleVariant noArg;
+      //H:/tmp/html_file.htm
+      app.Navigate(name, noArg, noArg, noArg, noArg);
+      while (app.get_ReadyState() != 4) {
+        ::Sleep(200);
+      }
+      app.ExecWB(OLECMDID_PRINT, OLECMDEXECOPT_DONTPROMPTUSER, noArg, noArg);
       ::CoUninitialize();
-      return 0;
-    }
-    COleVariant noArg;
-    app.Navigate(_T("file:///H:/tmp/html_file.htm"), noArg, noArg, noArg, noArg);
-    while (app.get_ReadyState() != 4) {
-    }
-    app.ExecWB(OLECMDID_PRINT, OLECMDEXECOPT_DONTPROMPTUSER, noArg, noArg);
-    ::CoUninitialize();
-    return 8;
-  });
-
+      return true;
+    });
+    // auto r = f.get(); // если требует код завершения
+  }
 }
